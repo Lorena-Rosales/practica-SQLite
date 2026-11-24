@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../models/tarea.dart';
 import '../data/base_datos.dart';
 
@@ -18,12 +19,10 @@ class _TareasPageState extends State<TareasPage> {
 
   late final Stream<List<Tarea>> _tareas;
 
-
   @override
   void initState() {
     super.initState();
     _tareas = widget.baseDatos.obtenerTareas();
-
   }
 
   Future<void> _agregarTarea() async {
@@ -33,27 +32,65 @@ class _TareasPageState extends State<TareasPage> {
     } on ArgumentError catch (e) {
       _mostrarAviso(e.message.toString());
     } catch (e) {
-    _mostrarAviso('No se pudo guardar la tarea: $e');
+      _mostrarAviso('No se pudo guardar la tarea: $e');
     }
   }
 
-  void _alternarCompletada(Tarea tarea, bool completada) {
-    _mostrarAviso('Implementar actualización de tarea');
+  Future<void> _alternarCompletada(Tarea tarea, bool completada) async {
+    try {
+      await widget.baseDatos.cambiarEstado(tarea.id, completada);
+    } catch (e) {
+      _mostrarAviso('No se pudo actualizar la tarea: $e');
+    }
   }
 
-  void _editarTarea(Tarea tarea) {
-    _mostrarAviso('Implementar edición de título');
+  Future<void> _editarTarea(Tarea tarea) async {
+    var textoEditado = tarea.titulo;
+    final nuevoTitulo = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Editar Tarea'),
+        content: TextFormField(
+          initialValue: tarea.titulo,
+          autofocus: true,
+          decoration: const InputDecoration(labelText: 'Título'),
+          onChanged: (valor) => textoEditado = valor,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, textoEditado),
+            child: const Text('Guardar'),
+          ),
+        ],
+      ),
+    );
+
+    if (nuevoTitulo == null) return;
+    try {
+      await widget.baseDatos.actualizarTitulo(tarea.id, nuevoTitulo);
+    } on ArgumentError catch (e) {
+      _mostrarAviso(e.message.toString());
+    } catch (e) {
+      _mostrarAviso('No se pudo editar la tarea: $e');
+    }
   }
 
-  void _eliminarTarea(Tarea tarea) {
-    _mostrarAviso('Implementar eliminación de tarea');
+  Future<void> _eliminarTarea(Tarea tarea) async {
+    try {
+      await widget.baseDatos.eliminarTarea(tarea.id);
+    } catch (e) {
+      _mostrarAviso('No se pudo eliminar la tarea: $e');
+    }
   }
 
   void _mostrarAviso(String mensaje) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(mensaje)),
-    );
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(mensaje)));
   }
 
   @override
@@ -89,11 +126,13 @@ class _TareasPageState extends State<TareasPage> {
             const SizedBox(height: 8),
             Expanded(
               child: StreamBuilder<List<Tarea>>(
-                stream: _tareas, 
+                stream: _tareas,
                 builder: (context, snapshot) {
                   if (snapshot.hasError) {
                     return Center(
-                      child: Text('Error al cargar las tareas: ${snapshot.error}'),
+                      child: Text(
+                        'Error al cargar las tareas: ${snapshot.error}',
+                      ),
                     );
                   }
                   if (!snapshot.hasData) {
@@ -101,43 +140,45 @@ class _TareasPageState extends State<TareasPage> {
                   }
                   final tareas = snapshot.data!;
                   if (tareas.isEmpty) {
-                    return const Center(child: Text('Todavía no hay tareas guardadas'));
+                    return const Center(
+                      child: Text('Todavía no hay tareas guardadas'),
+                    );
                   }
                   return ListView.builder(
-                      itemCount: tareas.length,
-                      itemBuilder: (context, index) {
-                        final tarea = tareas[index];
-                        return Card(
-                          child: ListTile(
-                            leading: Checkbox(
-                              value: tarea.completada,
-                              onChanged: (valor) {
-                                if (valor != null) {
-                                  _alternarCompletada(tarea, valor);
-                                }
-                              },
-                            ),
-                            title: Text(tarea.titulo),
-                            subtitle: Text('ID: ${tarea.id}'),
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                IconButton(
-                                  tooltip: 'Editar',
-                                  icon: const Icon(Icons.edit),
-                                  onPressed: () => _editarTarea(tarea),
-                                ),
-                                IconButton(
-                                  tooltip: 'Eliminar',
-                                  icon: const Icon(Icons.delete_outline),
-                                  onPressed: () => _eliminarTarea(tarea),
-                                ),
-                              ],
-                            ),
+                    itemCount: tareas.length,
+                    itemBuilder: (context, index) {
+                      final tarea = tareas[index];
+                      return Card(
+                        child: ListTile(
+                          leading: Checkbox(
+                            value: tarea.completada,
+                            onChanged: (valor) {
+                              if (valor != null) {
+                                _alternarCompletada(tarea, valor);
+                              }
+                            },
                           ),
-                        );
-                      },
-                    );
+                          title: Text(tarea.titulo),
+                          subtitle: Text('ID: ${tarea.id}'),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                tooltip: 'Editar',
+                                icon: const Icon(Icons.edit),
+                                onPressed: () => _editarTarea(tarea),
+                              ),
+                              IconButton(
+                                tooltip: 'Eliminar',
+                                icon: const Icon(Icons.delete_outline),
+                                onPressed: () => _eliminarTarea(tarea),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  );
                 },
               ),
             ),
