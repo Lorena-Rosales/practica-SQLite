@@ -36,6 +36,24 @@ class BaseDatos extends _$BaseDatos {
     return into(tareas).insert(TareasCompanion.insert(titulo: tituloLimpio));
   }
 
+  Future<void> actualizarTitulo(int id, String nuevoTitulo) async {
+    final tituloLimpio = nuevoTitulo.trim();
+    if (tituloLimpio.isEmpty) {
+      throw ArgumentError('El título no puede estar vacío');
+    }
+    await (update(tareas)..where((t) => t.id.equals(id)))
+        .write(TareasCompanion(titulo: Value(tituloLimpio)));
+  }
+
+  Future<void> cambiarEstado(int id, bool completada) async {
+    await (update(tareas)..where((t) => t.id.equals(id)))
+        .write(TareasCompanion(completada: Value(completada)));
+  }
+
+  Future<void> eliminarTarea(int id) async {
+    await (delete(tareas)..where((t) => t.id.equals(id))).go();
+  }
+
   Tarea _convertirATarea(TareaRegistro fila) {
     return Tarea(id: fila.id, titulo: fila.titulo, completada: fila.completada);
   }
