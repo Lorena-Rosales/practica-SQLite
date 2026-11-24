@@ -1,6 +1,8 @@
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 
+import '../models/tarea.dart';
+
 part 'base_datos.g.dart';
 
 @DataClassName('TareaRegistro')
@@ -20,4 +22,22 @@ class BaseDatos extends _$BaseDatos {
   static QueryExecutor _abrirConexion() {
     return driftDatabase(name: 'tareas');
   }
+
+  Stream<List<Tarea>> obtenerTareas() {
+    final consulta = select(tareas)..orderBy([(t) => OrderingTerm.asc(t.id)]);
+    return consulta.watch().map((filas) => filas.map(_convertirATarea).toList());
+  }
+
+  Future<int> guardarTarea(String titulo) async {
+    final tituloLimpio = titulo.trim();
+    if (tituloLimpio.isEmpty) {
+      throw ArgumentError('El título no puede estar vacío');
+    }
+    return into(tareas).insert(TareasCompanion.insert(titulo: tituloLimpio));
+  }
+
+  Tarea _convertirATarea(TareaRegistro fila) {
+    return Tarea(id: fila.id, titulo: fila.titulo, completada: fila.completada);
+  }
+
 }
