@@ -34,8 +34,9 @@ Para identificar a las tareas se utiliza el atributo de id. Este campo es genera
 ## Plataformas
 - **Android:** Probada en un celular Samsung Galaxy A21s.
 - **Web:** Probada en Chrome (Windows).
+- **Windows:** Probada como app de escritorio en Windows 11.
 - **iOS y macOS:** Previstas (carpetas incluidas). No se probaron porque requieren una Mac.
-- **Windows y Linux:** Previstas (carpetas incluidas). No se probaron.
+- **Linux:** Prevista (carpeta incluida). No se probó.
 
 ## Pruebas automáticas
 En test/base_datos_test.dart se usa una base SQLite en memoria con el propósito de no afectar los datos guardados en la aplicación:
@@ -63,6 +64,12 @@ flutter run -d web-server --web-port 8081
 y abrir http://localhost:8081 en Chrome.
 
 Nota: El puerto indicado aquí es un ejemplo, puede ser distinto. 
+
+Para Windows (requiere Visual Studio con "Desarrollo para el escritorio con C++"):
+
+```
+flutter run -d windows
+```
 
 Si se modifica la tabla, se debe regenerar el código de Drift:
 ```

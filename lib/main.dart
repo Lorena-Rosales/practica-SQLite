@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'screens/tareas_page.dart';
 import 'data/base_datos.dart';
+import 'tema.dart';
 
 void main() {
   final baseDatos = BaseDatos();
@@ -19,10 +20,7 @@ class GestorTareasApp extends StatelessWidget {
     return MaterialApp(
       title: 'Gestor de tareas',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
-        useMaterial3: true,
-      ),
+      theme: crearTema(),
       home: TareasPage(baseDatos: baseDatos),
     );
   }
