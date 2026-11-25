@@ -297,7 +297,7 @@ class _TarjetaTarea extends StatelessWidget {
           ),
         ),
         subtitle: Text(
-          '${completada ? 'Completada' : 'Pendiente'} · ID: ${tarea.id}',
+          '${completada ? 'Completada' : 'Pendiente'} ID: ${tarea.id}',
           style: TextStyle(
             color: completada ? ColoresApp.cian : ColoresApp.textoSecundario,
           ),
