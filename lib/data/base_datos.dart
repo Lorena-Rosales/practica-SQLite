@@ -20,7 +20,10 @@ class BaseDatos extends _$BaseDatos {
   int get schemaVersion => 1;
 
   static QueryExecutor _abrirConexion() {
-    return driftDatabase(name: 'tareas');
+    return driftDatabase(name: 'tareas',web: DriftWebOptions(
+        sqlite3Wasm: Uri.parse('sqlite3.wasm'),
+        driftWorker: Uri.parse('drift_worker.js'),
+      ),);
   }
 
   Stream<List<Tarea>> obtenerTareas() {
