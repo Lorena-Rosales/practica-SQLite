@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/tarea.dart';
 import '../data/base_datos.dart';
+import '../tema.dart';
 
 // Pantalla base SIN persistencia ni operaciones CRUD implementadas.
 // Conserva las indicaciones TODO para orientar tu trabajo.
@@ -102,85 +103,219 @@ class _TareasPageState extends State<TareasPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Gestor de tareas')),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            TextField(
-              controller: _tituloController,
-              decoration: const InputDecoration(
-                labelText: 'Nueva tarea',
-                border: OutlineInputBorder(),
+      appBar: AppBar(
+        toolbarHeight: 72,
+        titleSpacing: 24,
+        title: const Text('Gestor de tareas'),
+      ),
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, restricciones) {
+            if (restricciones.maxWidth >= 760) {
+              return Padding(
+                padding: const EdgeInsets.all(24),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(width: 320, child: _construirFormulario()),
+                    const SizedBox(width: 24),
+                    Expanded(child: _construirLista()),
+                  ],
+                ),
+              );
+            }
+            return Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _construirFormulario(),
+                  const SizedBox(height: 16),
+                  Expanded(child: _construirLista()),
+                ],
               ),
-            ),
-            const SizedBox(height: 8),
-            FilledButton.icon(
-              onPressed: _agregarTarea,
-              icon: const Icon(Icons.add),
-              label: const Text('Agregar tarea'),
-            ),
-            const SizedBox(height: 12),
-            const Text('Mis tareas', style: TextStyle(fontSize: 18)),
-            const SizedBox(height: 8),
-            Expanded(
-              child: StreamBuilder<List<Tarea>>(
-                stream: _tareas,
-                builder: (context, snapshot) {
-                  if (snapshot.hasError) {
-                    return Center(
-                      child: Text(
-                        'Error al cargar las tareas: ${snapshot.error}',
-                      ),
-                    );
-                  }
-                  if (!snapshot.hasData) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-                  final tareas = snapshot.data!;
-                  if (tareas.isEmpty) {
-                    return const Center(
-                      child: Text('Todavía no hay tareas guardadas'),
-                    );
-                  }
-                  return ListView.builder(
-                    itemCount: tareas.length,
-                    itemBuilder: (context, index) {
-                      final tarea = tareas[index];
-                      return Card(
-                        child: ListTile(
-                          leading: Checkbox(
-                            value: tarea.completada,
-                            onChanged: (valor) {
-                              if (valor != null) {
-                                _alternarCompletada(tarea, valor);
-                              }
-                            },
-                          ),
-                          title: Text(tarea.titulo),
-                          subtitle: Text('ID: ${tarea.id}'),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                tooltip: 'Editar',
-                                icon: const Icon(Icons.edit),
-                                onPressed: () => _editarTarea(tarea),
-                              ),
-                              IconButton(
-                                tooltip: 'Eliminar',
-                                icon: const Icon(Icons.delete_outline),
-                                onPressed: () => _eliminarTarea(tarea),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _construirFormulario() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: ColoresApp.panel,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const _Encabezado('NUEVA TAREA'),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _tituloController,
+            decoration: const InputDecoration(labelText: 'Nueva tarea'),
+          ),
+          const SizedBox(height: 12),
+          FilledButton.icon(
+            onPressed: _agregarTarea,
+            icon: const Icon(Icons.add),
+            label: const Text('Agregar tarea'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _construirLista() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
+      decoration: BoxDecoration(
+        border: Border.all(color: ColoresApp.borde),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const _Encabezado('MIS TAREAS'),
+          const SizedBox(height: 16),
+          Expanded(
+            child: StreamBuilder<List<Tarea>>(
+              stream: _tareas,
+              builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                  return Center(
+                    child: Text(
+                      'Error al cargar las tareas: ${snapshot.error}',
+                    ),
                   );
-                },
-              ),
+                }
+                if (!snapshot.hasData) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                final tareas = snapshot.data!;
+                if (tareas.isEmpty) {
+                  return const Center(
+                    child: Text(
+                      'Todavía no hay tareas guardadas',
+                      style: TextStyle(color: ColoresApp.textoSecundario),
+                    ),
+                  );
+                }
+                return ListView.builder(
+                  itemCount: tareas.length,
+                  itemBuilder: (context, index) {
+                    final tarea = tareas[index];
+                    return _TarjetaTarea(
+                      tarea: tarea,
+                      alCambiarEstado: (valor) =>
+                          _alternarCompletada(tarea, valor),
+                      alEditar: () => _editarTarea(tarea),
+                      alEliminar: () => _eliminarTarea(tarea),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Encabezado extends StatelessWidget {
+  const _Encabezado(this.texto);
+
+  final String texto;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      texto,
+      style: const TextStyle(
+        color: Colors.white,
+        fontSize: 13,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 1.5,
+      ),
+    );
+  }
+}
+
+class _TarjetaTarea extends StatelessWidget {
+  const _TarjetaTarea({
+    required this.tarea,
+    required this.alCambiarEstado,
+    required this.alEditar,
+    required this.alEliminar,
+  });
+
+  final Tarea tarea;
+  final ValueChanged<bool> alCambiarEstado;
+  final VoidCallback alEditar;
+  final VoidCallback alEliminar;
+
+  @override
+  Widget build(BuildContext context) {
+    final completada = tarea.completada;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: ColoresApp.fondo,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: completada ? ColoresApp.cian : ColoresApp.borde,
+          width: completada ? 2 : 1,
+        ),
+        boxShadow: completada
+            ? [
+                BoxShadow(
+                  color: ColoresApp.cian.withValues(alpha: 0.25),
+                  blurRadius: 12,
+                ),
+              ]
+            : null,
+      ),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        leading: Checkbox(
+          value: completada,
+          onChanged: (valor) {
+            if (valor != null) {
+              alCambiarEstado(valor);
+            }
+          },
+        ),
+        title: Text(
+          tarea.titulo,
+          style: TextStyle(
+            color: completada ? ColoresApp.cian : Colors.white,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        subtitle: Text(
+          '${completada ? 'Completada' : 'Pendiente'} · ID: ${tarea.id}',
+          style: TextStyle(
+            color: completada ? ColoresApp.cian : ColoresApp.textoSecundario,
+          ),
+        ),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              tooltip: 'Editar',
+              color: ColoresApp.textoSecundario,
+              icon: const Icon(Icons.edit_outlined),
+              onPressed: alEditar,
+            ),
+            IconButton(
+              tooltip: 'Eliminar',
+              color: ColoresApp.textoSecundario,
+              icon: const Icon(Icons.delete_outline),
+              onPressed: alEliminar,
             ),
           ],
         ),
